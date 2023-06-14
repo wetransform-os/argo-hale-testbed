@@ -1,0 +1,73 @@
+# Basic workflow that uses the transformer image for a transformation
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: transform-
+  annotations:
+    workflows.argoproj.io/description: |
+      Transformation example using the transformer image.
+spec:
+  entrypoint: transform
+  templates:
+  - name: transform
+    steps:
+      - - name: transform
+          template: hc-transformer
+          arguments: {}
+  - name: hc-transformer
+    # Artifacts as in the default paths in the transformer image
+    outputs:
+      artifacts:
+        - name: result
+          path: /tmp/target.gml
+        - name: reports
+          path: /tmp/reports.log
+        - name: stats
+          path: /tmp/stats.json
+    container:
+      name: 'transformer'
+      image: localhost:5000/wetransform/hale-transformer:latest
+      env:
+        - name: HALE_OPTS
+          value: -Dlog.hale.level=INFO -Dlog.root.level=WARN -Xmx800m
+        - name: HT_PROJECT_URL
+          value: http://static-projects.default.svc.cluster.local/hydro-example.halez
+        - name: HT_SOURCE_URL
+          value: http://static-sources.default.svc.cluster.local/hydro-example.zip
+      resources:
+        limits:
+          cpu: 1024m
+          memory: 1Gi
+    # retryStrategy:
+    #   limit: '2'
+    #   backoff:
+    #     duration: '30'
+    #     factor: '6'
+  # - name: exit-handler
+  #   inputs: {}
+  #   outputs: {}
+  #   metadata: {}
+  #   steps:
+  #     - - name: notify-error
+  #         template: notify-error
+  #         arguments: {}
+  #         when: '{{workflow.status}} != Succeeded'
+  # - name: notify-error
+  #   inputs: {}
+  #   outputs: {}
+  #   metadata: {}
+  #   script:
+  #     name: ''
+  #     image: wetransform/curl
+  #     command:
+  #       - bash
+  #     resources: {}
+  #     source: |-
+  #       set -e
+  #       curl -sSf ...
+  #   retryStrategy:
+  #     limit: '4'
+  #     backoff:
+  #       duration: '30'
+  #       factor: '3'
+  #       maxDuration: 4m
