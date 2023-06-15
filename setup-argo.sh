@@ -20,13 +20,6 @@ metadata:
     kubernetes.io/service-account.name: argo-user
 type: kubernetes.io/service-account-token
 EOL
-# get token
-SECRET=argo-user-token # $(kubectl -n argo get sa argo-user -o=jsonpath='{.secrets[0].name}')
-ARGO_TOKEN="Bearer $(kubectl -n argo get secret $SECRET -o=jsonpath='{.data.token}' | base64 --decode)"
-echo ""
-echo "Access token for Argo is:"
-echo $ARGO_TOKEN
-echo ""
 # patch Argo to run w/o SSL
 # https://argoproj.github.io/argo-workflows/tls/
 kubectl patch deployment \
@@ -45,13 +38,24 @@ kubectl patch deployment \
   {"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/httpGet/scheme", "value": "HTTP"}
 ]'
 
+# wait for token to be populated
+sleep 5s
+
+# get token
+SECRET=argo-user-token # $(kubectl -n argo get sa argo-user -o=jsonpath='{.secrets[0].name}')
+ARGO_TOKEN="Bearer $(kubectl -n argo get secret $SECRET -o=jsonpath='{.data.token}' | base64 --decode)"
+echo ""
+echo "Access token for Argo is:"
+echo $ARGO_TOKEN
+echo ""
+
 
 # store argo token
 cat >env-argo.sh <<EOL
 #!/bin/bash
 
-export ARGO_SERVER='localhost:2746' 
-export ARGO_HTTP1=true  
+export ARGO_SERVER='localhost:2746'
+export ARGO_HTTP1=true
 export ARGO_SECURE=false
 export ARGO_BASE_HREF=
 export ARGO_TOKEN="$ARGO_TOKEN"
