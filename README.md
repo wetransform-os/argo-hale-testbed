@@ -5,6 +5,7 @@ Transformation workflows
 ------------------------
 
 This repository contains a number of example workflows for running a transformation with hale-cli in Argo Workflows.
+Out of the box these workflows are intended to be run with the test setup described here, but they can be easily adapted to run in another environment.
 
 **Note:** All workflows defined here assume XML/GML files as sources for the transformations (in most cases expected within a Zip archive).
 Other kinds of sources may require additional configuration related to loading the data for the transformation.
@@ -17,7 +18,7 @@ The workflow specifies the URL to a GML file and to a hale project archive.
 The hale-cli image is used to transform the source file.
 The transformation result and related files are stored as workflow outputs in the artifact repository.
 
-To run with argo CLI:
+To run with argo CLI in the test setup:
 
 ```
 argo submit --watch workflows/transform-orgcli-example.yaml
@@ -29,12 +30,31 @@ This workflow is defined in [workflows/transform-transformer-example.yaml](./wor
 
 The workflow specifies the URL to a Zip file, that contains the GML data to transform, and to a hale project archive.
 The transformer image defined in [images/hale-transformer](./images/hale-transformer) is used to transform the source file.
+It expects the source file always to be a Zip archive that is extracted and all `.gml` files used as source for the transformation.
 The transformation result and related files are stored as workflow outputs in the artifact repository.
 
-To run with argo CLI:
+To run with argo CLI in the test setup:
 
 ```
 argo submit --watch workflows/transform-transformer-example.yaml
+```
+
+### Transformation of Zip with GML file using transformer workflow template
+
+This workflow is similar to the above, but a [workflow template](./workflows/transformer-template/template.yaml) is used so that the [actual workflow](./workflows/transformer-template/workflow-example.yaml) only references the template and provides the required parameters.
+
+To run with argo CLI in the test setup:
+
+```
+argo template create workflows/transformer-template/template.yaml
+argo submit --watch workflows/transformer-template/workflow-example.yaml
+```
+
+To run with `kubectl` in the test setup:
+
+```
+kubectl -n argo apply -f workflows/transformer-template/template.yaml
+kubectl -n argo create -f workflows/transformer-template/workflow-example.yaml
 ```
 
 
@@ -43,11 +63,34 @@ Requirements for running workflows
 
 Running the workflows requires at least:
 
-- An installation of Argo Workflows (Version 3.4+ recommended) with a configured default artifact repository
+- An installation of Argo Workflows (Version 3.4+ recommended)
+
+The workflows as they are defined in the respository assume Argo is configured with a default artifact repository.
+Artifacts in that case can be accessed via the Argo server API and UI or directly via the artifact repository.
+But the workflows can also be easily adapted to store artifacts in an explicitly configured store and there in a specific location.
+Here is an example of a configuration for one output artifact to be stored in S3:
+
+```
+artifacts:
+  - name: my-artifact
+    path: /path/to/output
+    s3:
+      bucket: my-s3-bucket
+      endpoint: s3.amazonaws.com
+      accessKeySecret:
+        name: s3-access-key-secret
+        key: accessKey
+      secretKeySecret:
+        name: s3-secret-key-secret
+        key: secretKey
+      key: my-folder/my-artifact.tar.gz
+```
 
 To submit the workflows there are different possibilities:
 
 - Use the `argo` CLI (e.g. `argo submit`)
+- Use the Kubernetes API (e.g. via `kubectl`)
+- Use the Argo serve API
 
 ### Running outside of the test setup
 

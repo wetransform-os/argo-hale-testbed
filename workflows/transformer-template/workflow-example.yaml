@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: transform-tmpl-
+spec:
+  workflowTemplateRef:
+    name: transformer
+  arguments:
+    parameters:
+    - name: source-url
+      value: http://static-sources.default.svc.cluster.local/hydro-example.zip
+    - name: project-url
+      value: http://static-projects.default.svc.cluster.local/hydro-example.halez
