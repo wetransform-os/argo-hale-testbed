@@ -56,7 +56,7 @@ rc=$?; if [ $rc -ne 0 ]; then echo "ERROR: Error downloading source file"; exit 
     # multiple files
     # use extracted folder as new source
     source_loc="${DATA_DIR}/source-zip"
-    SOURCE_ARGS="-source $source_loc -include \"$HT_SOURCE_INCLUDE\""
+    SOURCE_ARGS="-source $source_loc -include $HT_SOURCE_INCLUDE"
   fi
 
   echo "Local source is ${source_loc}"
