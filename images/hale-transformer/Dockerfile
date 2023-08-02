@@ -1,4 +1,4 @@
-FROM wetransform/hale-cli:latest
+FROM wetransform/hale-cli:4.2.0-SNAPSHOT
 
 ENV DATA_DIR /opt/data
 
